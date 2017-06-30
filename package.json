@@ -1,0 +1,40 @@
+{
+  "name": "divvy",
+  "version": "1.0.0",
+  "description": "Divvy Visualization",
+  "main": "index.js",
+  "scripts": {
+    "start": "parallelshell 'webpack' 'webpack --watch' 'npm run watch' 'npm run serve'",
+    "prestart": "npm run clean && npm run copy && npm run sass",
+    "clean": "rimraf dist/",
+    "copy": "mkdir -p dist && mkdir dist/data && ncp src/index.html dist/index.html && ncp src/data/Divvy_Bicycle_Stations.csv dist/data/Divvy_Bicycle_Stations.csv --stopOnError",
+    "sass": "node-sass -o dist/css -q --output-style compact src/scss/",
+    "serve": "http-server ./dist -c-1",
+    "test": "mocha --require co-mocha --require babel-polyfill --compilers js:babel-core/register 'tests/*-test.js'",
+    "watch": "node tasks/watch.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel": "^6.23.0",
+    "babel-core": "^6.23.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-es2015": "^6.22.0",
+    "chai": "^3.5.0",
+    "exit-hook": "^1.1.1",
+    "http-server": "^0.9.0",
+    "mocha": "^3.2.0",
+    "ncp": "^2.0.0",
+    "parallelshell": "^2.0.0",
+    "path": "^0.12.7",
+    "rimraf": "^2.6.1",
+    "shelljs": "^0.7.8",
+    "tiny-lr": "^1.0.5",
+    "webpack": "^2.4.1"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.23.0",
+    "csv-parse": "^1.2.0",
+    "mapbox-gl": "^0.38.0"
+  }
+}
