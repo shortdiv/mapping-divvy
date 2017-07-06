@@ -25,30 +25,51 @@ function getStations() {
               type: "Point",
               coordinates: [parseFloat(latlng[1]), parseFloat(latlng[0])]
             },
-            properties: {}
+            properties: {
+              iconSize: [40, 40]
+            }
           }
         )
       })
-     resolve(geoStations)
+      resolve({
+        type: "FeatureCollection",
+        features: geoStations
+      })
     })
   })
 }
 
-getStations().then((stations)=>{
+getStations().then((stations) => {
   map.on('load', () => {
-    map.addSource('stations', {type: 'geojson', data: { type: "FeatureCollection", features: stations}})
-    map.addLayer({
-      id: "points",
-      type: "symbol",
-      source: 'stations',
-      layout: {
-        "icon-image": "bicycle-15",
-        "text-field": "{title}",
-        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
-        "text-offset": [0, 0.6],
-        "text-anchor": "top"
-      }
+    debugger;
+    var markerHeight = 50, markerRadius = 10, linearOffset = 25;
+
+    stations.features.forEach((station) => {
+    var el = document.createElement('div');
+    el.className = 'marker';
+    el.style.backgroundImage = 'url(https://placekitten.com/g/' + station.properties.iconSize.join('/') + '/)';
+    el.style.width = station.properties.iconSize[0] + 'px';
+    el.style.height = station.properties.iconSize[1] + 'px';
+      new mapboxgl.Marker(el)
+        .setLngLat(station.geometry.coordinates)
+        .addTo(map)
     })
+    //map.addSource('stations', {type: 'geojson', data: { type: "FeatureCollection", features: stations}})
+    //map.addLayer({
+    //  id: "points",
+    //  type: "symbol",
+    //  source: 'stations',
+    //  layout: {
+    //    "icon-image": "marker-15",
+    //    "text-field": "{title}",
+    //    "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+    //    "text-offset": [0, 0.6],
+    //    "text-anchor": "top"
+    //  }
+    //})
+    //map.on('click', () => {
+
+    //})
   })
 })
 
