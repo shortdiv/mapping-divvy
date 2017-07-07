@@ -1,5 +1,6 @@
 import mapboxgl from 'mapbox-gl';
 import {read} from './readFile'
+import polylabel from 'polylabel';
 const parse = require('csv-parse/lib/sync')
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2hvcnRkaXYiLCJhIjoiY2l3OGc5YmE5MDJzZjJ5bWhkdDZieGdzcSJ9.1z-swTWtcCHYI_RawDJCEw';
@@ -18,6 +19,9 @@ function getStations() {
       object.forEach((station) => {
         let latlng = station.Location.substr(1, station.Location.length - 2).split(',')
         let lnglat = parseInt(latlng[1]) + ", " + parseInt(latlng[0])
+        let stationName = station["Station Name"]
+        let stats = station["Status"]
+        let docks = station["Total Docks"]
         geoStations.push(
           {
             type: "Feature",
@@ -26,7 +30,8 @@ function getStations() {
               coordinates: [parseFloat(latlng[1]), parseFloat(latlng[0])]
             },
             properties: {
-
+              stationName: stationName,
+              docks: docks
             }
           }
         )
@@ -87,14 +92,27 @@ getStations().then((stations) => {
     }
     })
 
+     var popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+    });
+
     //all neighborhoods related events//
     map.on('mousemove', 'neighborhoods-fill', (e) => {
       map.getCanvas().style.cursor = 'pointer'
       map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
+      console.log(e.features[0].geometry.coordinates.length)
+      //polylabel only works for single dimensional arrays i.e. not ohare and not streeterville//
+      var t = polylabel(e.features[0].geometry.coordinates, 1.0)
+      popup
+        .setLngLat(t)
+        .setHTML(e.features[0].properties.PRI_NEIGH)
+        .addTo(map)
     })
     map.on('mouseleave', 'neighborhoods-fill', (e) => {
       map.getCanvas().style.cursor = ''
       map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", ""]);
+      popup.remove()
     })
     //map.on('click', 'neighborhoods-fill', (e) => {
     //  new mapboxgl.Popup()
@@ -111,9 +129,10 @@ getStations().then((stations) => {
       map.getCanvas().style.cursor = ''
     })
     map.on('click', 'stations', (e) => {
+      var content = "<h1>"+e.features[0].properties.stationName + "</h1>" + "<p>Total Docks: " + e.features[0].properties.docks + "</p>"
       new mapboxgl.Popup()
         .setLngLat(e.features[0].geometry.coordinates)
-        .setHTML('hello')
+        .setHTML(content)
         .addTo(map);
     })
   })
