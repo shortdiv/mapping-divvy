@@ -5,7 +5,7 @@ const parse = require('csv-parse/lib/sync')
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2hvcnRkaXYiLCJhIjoiY2l3OGc5YmE5MDJzZjJ5bWhkdDZieGdzcSJ9.1z-swTWtcCHYI_RawDJCEw';
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/shortdiv/cj4a6aouh38g72spf75ajbkc5',
+  style: 'mapbox://styles/mapbox/light-v9',
   center: [-87.623177, 41.881832],
   zoom: 12
 })
@@ -42,6 +42,27 @@ function getStations() {
 getStations().then((stations) => {
   map.on('load', () => {
     map.addSource('stations', { type: 'geojson', data: stations })
+    map.addSource('neighborhoods', { type: 'geojson', data:'https://gist.githubusercontent.com/shortdiv/c9b29e3627b16a378a7b89fe26557bef/raw/a7eb6299fe7193e53d9a77058bd795bd2f83ba5f/chicagoNeighborhoods.geojson' })
+    map.addLayer({
+      "id": "neighborhoods-fill",
+      "type": "fill",
+      "source": "neighborhoods",
+      "layout": {},
+      "paint": {
+        "fill-color": "#b3d5ed",
+        "fill-opacity": 0.47
+      }
+    })
+    map.addLayer({
+      "id": "neighborhoods-borders",
+      "type": "line",
+      "source": "neighborhoods",
+      "layout": {},
+      "paint": {
+        "line-color": "#ad0403",
+        "line-width": 2
+      }
+    })
     map.addLayer({
       "id": "stations",
       "type": "symbol",
