@@ -52,7 +52,7 @@ getStations().then((stations) => {
         "fill-color": "#b3d5ed",
         "fill-opacity": 0.47
       }
-    })
+    }, 'stations')
     map.addLayer({
       "id": "neighborhoods-borders",
       "type": "line",
@@ -62,6 +62,17 @@ getStations().then((stations) => {
         "line-color": "#ad0403",
         "line-width": 2
       }
+    })
+    map.addLayer({
+      id: "neighborhoods-hover",
+      type: "fill",
+      source: "neighborhoods",
+      layout: {},
+      paint: {
+        "fill-color": "#b3d5ed",
+        "fill-opacity": 0.6
+      },
+      filter: ["==", "PRI_NEIGH", ""]
     })
     map.addLayer({
       "id": "stations",
@@ -75,17 +86,35 @@ getStations().then((stations) => {
       "text-anchor": "top"
     }
     })
-    map.on('click', 'stations', (e) => {
-      new mapboxgl.Popup()
-        .setLngLat(e.features[0].geometry.coordinates)
-        .setHTML('hello')
-        .addTo(map);
+
+    //all neighborhoods related events//
+    map.on('mousemove', 'neighborhoods-fill', (e) => {
+      map.getCanvas().style.cursor = 'pointer'
+      map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
     })
+    map.on('mouseleave', 'neighborhoods-fill', (e) => {
+      map.getCanvas().style.cursor = ''
+      map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", ""]);
+    })
+    //map.on('click', 'neighborhoods-fill', (e) => {
+    //  new mapboxgl.Popup()
+    //    .setLngLat(e.features[0].properties.geometry.coordinates)
+    //    .setHTML(e.features[0].properties.PRI_NEIGH)
+    //    .addTo(map);
+    //})
+
+    //all station related events//
     map.on('mouseenter', 'stations', () => {
       map.getCanvas().style.cursor = 'pointer'
     })
     map.on('mouseleave', 'stations', () => {
       map.getCanvas().style.cursor = ''
+    })
+    map.on('click', 'stations', (e) => {
+      new mapboxgl.Popup()
+        .setLngLat(e.features[0].geometry.coordinates)
+        .setHTML('hello')
+        .addTo(map);
     })
   })
 })
