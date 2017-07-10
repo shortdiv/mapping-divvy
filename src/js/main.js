@@ -47,7 +47,7 @@ function getStations() {
 getStations().then((stations) => {
   map.on('load', () => {
     map.addSource('stations', { type: 'geojson', data: stations })
-    map.addSource('neighborhoods', { type: 'geojson', data:'https://gist.githubusercontent.com/shortdiv/c9b29e3627b16a378a7b89fe26557bef/raw/a7eb6299fe7193e53d9a77058bd795bd2f83ba5f/chicagoNeighborhoods.geojson' })
+    map.addSource('neighborhoods', { type: 'geojson', data: '/data/chicago_neighborhoods.geojson' })
     map.addLayer({
       "id": "neighborhoods-fill",
       "type": "fill",

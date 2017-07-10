@@ -7,7 +7,7 @@
     "start": "parallelshell 'webpack' 'webpack --watch' 'npm run watch' 'npm run serve'",
     "prestart": "npm run clean && npm run copy && npm run sass",
     "clean": "rimraf dist/",
-    "copy": "mkdir -p dist && mkdir dist/data && ncp src/index.html dist/index.html && ncp src/data/Divvy_Bicycle_Stations.csv dist/data/Divvy_Bicycle_Stations.csv --stopOnError",
+    "copy": "mkdir -p dist && mkdir dist/data && ncp src/index.html dist/index.html && ncp src/data/Divvy_Bicycle_Stations.csv dist/data/Divvy_Bicycle_Stations.csv && ncp src/data/chicago_neighborhoods.geojson dist/data/chicago_neighborhoods.geojson --stopOnError",
     "sass": "node-sass -o dist/css -q --output-style compact src/scss/",
     "serve": "http-server ./dist -c-1",
     "test": "mocha --require co-mocha --require babel-polyfill --compilers js:babel-core/register 'tests/*-test.js'",
