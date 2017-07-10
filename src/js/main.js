@@ -72,30 +72,31 @@ getStations().then((stations) => {
         "fill-color": "#b3d5ed",
         "fill-opacity": 0.47
       },
-      filter: ["==", "PRI_NEIGH", "Lake View"]
+      filter: ["!=", "PRI_NEIGH", ""]
     }, 'stations')
 
-    //map.addLayer({
-    //  "id": "neighborhoods-borders",
-    //  "type": "line",
-    //  "source": "neighborhoods",
-    //  "layout": {},
-    //  "paint": {
-    //    "line-color": "#ad0403",
-    //    "line-width": 2
-    //  }
-    //})
-    //map.addLayer({
-    //  id: "neighborhoods-hover",
-    //  type: "fill",
-    //  source: "neighborhoods",
-    //  layout: {},
-    //  paint: {
-    //    "fill-color": "#b3d5ed",
-    //    "fill-opacity": 0.6
-    //  },
-    //  filter: ["==", "PRI_NEIGH", ""]
-    //})
+    map.addLayer({
+      "id": "neighborhoods-borders",
+      "type": "line",
+      "source": "neighborhoods",
+      "layout": {},
+      "paint": {
+        "line-color": "#ad0403",
+        "line-width": 2
+      },
+      filter: ["!=", "PRI_NEIGH", ""]
+    })
+    map.addLayer({
+      id: "neighborhoods-hover",
+      type: "fill",
+      source: "neighborhoods",
+      layout: {},
+      paint: {
+        "fill-color": "#b3d5ed",
+        "fill-opacity": 0.6
+      },
+      filter: ["==", "PRI_NEIGH", ""]
+    })
     map.addLayer({
       "id": "stations",
       "type": "symbol",
