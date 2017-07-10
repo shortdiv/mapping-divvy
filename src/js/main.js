@@ -11,6 +11,19 @@ const map = new mapboxgl.Map({
   zoom: 12
 })
 
+const mapEl = document.querySelector('#map')
+let filter = document.createElement('select')
+filter.classList += 'filter'
+
+let select = document.createElement('select')
+
+function makeStation(station) {
+  var parser = new DOMParser
+  var content = '<option value ="' + station["Station Name"] + '">' + station["Station Name"] + '</option>'
+  var snippet = parser.parseFromString(content, 'text/html').body.children[0]
+  return snippet
+}
+
 function getStations() {
   return new Promise((resolve, reject) => {
     read().then((response) => {
@@ -22,6 +35,7 @@ function getStations() {
         let stationName = station["Station Name"]
         let stats = station["Status"]
         let docks = station["Total Docks"]
+        filter.appendChild(makeStation(station))
         geoStations.push(
           {
             type: "Feature",
@@ -36,6 +50,7 @@ function getStations() {
           }
         )
       })
+      mapEl.appendChild(filter)
       resolve({
         type: "FeatureCollection",
         features: geoStations
@@ -114,12 +129,6 @@ getStations().then((stations) => {
       map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", ""]);
       popup.remove()
     })
-    //map.on('click', 'neighborhoods-fill', (e) => {
-    //  new mapboxgl.Popup()
-    //    .setLngLat(e.features[0].properties.geometry.coordinates)
-    //    .setHTML(e.features[0].properties.PRI_NEIGH)
-    //    .addTo(map);
-    //})
 
     //all station related events//
     map.on('mouseenter', 'stations', () => {
