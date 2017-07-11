@@ -13,16 +13,22 @@ const map = new mapboxgl.Map({
 
 const mapEl = document.querySelector('#map')
 let filter = document.createElement('select')
-filter.classList += 'filter'
+filter.className += 'filter'
 
-let select = document.createElement('select')
-
-function makeStation(station) {
+function makeNeighborhood(name) {
   var parser = new DOMParser
-  var content = '<option value ="' + station["Station Name"] + '">' + station["Station Name"] + '</option>'
+  var content = '<option value ="' + name + '">' + name + '</option>'
   var snippet = parser.parseFromString(content, 'text/html').body.children[0]
   return snippet
 }
+
+    fetchURL('/data/chicago_neighborhoods.geojson').then((response) => {
+      response.features.forEach((feature) => {
+        let neighborhood = feature.properties.PRI_NEIGH;
+        filter.appendChild(makeNeighborhood(neighborhood))
+      })
+      mapEl.appendChild(filter)
+    })
 
 function getStations() {
   return new Promise((resolve, reject) => {
@@ -35,7 +41,7 @@ function getStations() {
         let stationName = station["Station Name"]
         let stats = station["Status"]
         let docks = station["Total Docks"]
-        filter.appendChild(makeStation(station))
+        //filter.appendChild(makeStation(station))
         geoStations.push(
           {
             type: "Feature",
@@ -50,7 +56,7 @@ function getStations() {
           }
         )
       })
-      mapEl.appendChild(filter)
+      //mapEl.appendChild(filter)
       resolve({
         type: "FeatureCollection",
         features: geoStations
@@ -99,6 +105,17 @@ getStations().then((stations) => {
       filter: ["==", "PRI_NEIGH", ""]
     })
     map.addLayer({
+      id: "neighborhoods-selected",
+      type: "fill",
+      source: "neighborhoods",
+      layout: {},
+      paint: {
+        "fill-color": "#000",
+        "fill-opacity": 0.4
+      },
+      filter: ["==", "PRI_NEIGH", ""]
+    })
+    map.addLayer({
       "id": "stations",
       "type": "symbol",
       "source": "stations",
@@ -117,8 +134,15 @@ getStations().then((stations) => {
     });
 
     //all neighborhoods related events//
+    map.on('click', 'neighborhoods-fill', (e) => {
+      var element = document.querySelector('.filter')
+      element.value = e.features[0].properties.PRI_NEIGH
+      var event = new Event('change');
+      element.dispatchEvent(event)
+    })
     map.on('mousemove', 'neighborhoods-fill', (e) => {
       map.getCanvas().style.cursor = 'pointer'
+      //if selected dont change color//
       map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
       //polylabel only works for single dimensional arrays i.e. not ohare and not streeterville//
       var t = polylabel(e.features[0].geometry.coordinates, 1.0)
@@ -148,6 +172,13 @@ getStations().then((stations) => {
         .addTo(map);
     })
   })
+
+  filter.addEventListener('change', (e) => {
+    console.log(e.target.value)
+    map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.value]);
+    //map.setLayoutProperty(e.target.value, 'visibility', 'visible');
+  })
+
 })
 
 
