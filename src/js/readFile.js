@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 const parse = require('csv-parse/lib/sync')
 
-var read = function() {
+var fetchCSV = function() {
   return new Promise(function(resolve, reject) {
     var req = new XMLHttpRequest();
     req.open('GET', 'data/Divvy_Bicycle_Stations.csv', true)
@@ -16,4 +16,11 @@ var read = function() {
   })
 }
 
-export {read}
+var fetchURL = function(url) {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then((response) => {resolve(response.json())})
+  })
+}
+
+export { fetchCSV, fetchURL }

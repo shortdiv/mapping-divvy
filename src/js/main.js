@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import {read} from './readFile'
+import { fetchCSV, fetchURL } from './readFile'
 import polylabel from 'polylabel';
 const parse = require('csv-parse/lib/sync')
 
@@ -26,7 +26,7 @@ function makeStation(station) {
 
 function getStations() {
   return new Promise((resolve, reject) => {
-    read().then((response) => {
+    fetchCSV().then((response) => {
       let object = parse(response, {columns: true})
       let geoStations = []
       object.forEach((station) => {
@@ -63,6 +63,7 @@ getStations().then((stations) => {
   map.on('load', () => {
     map.addSource('stations', { type: 'geojson', data: stations })
     map.addSource('neighborhoods', { type: 'geojson', data: '/data/chicago_neighborhoods.geojson' })
+
     map.addLayer({
       "id": "neighborhoods-fill",
       "type": "fill",
@@ -119,7 +120,6 @@ getStations().then((stations) => {
     map.on('mousemove', 'neighborhoods-fill', (e) => {
       map.getCanvas().style.cursor = 'pointer'
       map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
-      console.log(e.features[0].geometry.coordinates.length)
       //polylabel only works for single dimensional arrays i.e. not ohare and not streeterville//
       var t = polylabel(e.features[0].geometry.coordinates, 1.0)
       popup
