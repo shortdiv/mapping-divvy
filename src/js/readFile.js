@@ -17,10 +17,10 @@ var fetchCSV = function() {
 }
 
 var fetchURL = function(url) {
-  return new Promise((resolve, reject) => {
-    fetch(url)
-      .then((response) => {resolve(response.json())})
-  })
+  return fetch(url)
+    .then(response => {
+      return response.json()
+    })
 }
 
 export { fetchCSV, fetchURL }

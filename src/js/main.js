@@ -22,13 +22,14 @@ function makeNeighborhood(name) {
   return snippet
 }
 
-    fetchURL('/data/chicago_neighborhoods.geojson').then((response) => {
-      response.features.forEach((feature) => {
-        let neighborhood = feature.properties.PRI_NEIGH;
-        filter.appendChild(makeNeighborhood(neighborhood))
+    fetchURL('/data/chicago_neighborhoods.geojson')
+      .then(response => {
+        response.features.forEach(feature => {
+          let neighborhood = feature.properties.PRI_NEIGH;
+          filter.appendChild(makeNeighborhood(neighborhood))
+        })
+        mapEl.appendChild(filter)
       })
-      mapEl.appendChild(filter)
-    })
 
 function getStations() {
   return new Promise((resolve, reject) => {
