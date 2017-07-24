@@ -15,21 +15,24 @@ const mapEl = document.querySelector('#map')
 let filter = document.createElement('select')
 filter.className += 'filter'
 
-function makeNeighborhood(name) {
+function makeNeighborhoodInput(name) {
   var parser = new DOMParser
   var content = '<option value ="' + name + '">' + name + '</option>'
   var snippet = parser.parseFromString(content, 'text/html').body.children[0]
   return snippet
 }
 
-    fetchURL('/data/chicago_neighborhoods.geojson')
-      .then(response => {
-        response.features.forEach(feature => {
-          let neighborhood = feature.properties.PRI_NEIGH;
-          filter.appendChild(makeNeighborhood(neighborhood))
-        })
-        mapEl.appendChild(filter)
+function getNeighborhoods() {
+  return fetchURL('/data/chicago_neighborhoods.geojson')
+    .then(response => {
+      response.features.forEach(feature => {
+        let neighborhood = feature.properties.PRI_NEIGH;
+        filter.appendChild(makeNeighborhoodInput(neighborhood))
       })
+      mapEl.appendChild(filter)
+      return response
+    })
+}
 
 function getStations() {
   return new Promise((resolve, reject) => {
@@ -68,45 +71,59 @@ function getStations() {
 
 getStations().then((stations) => {
   map.on('load', () => {
+    var self = this;
     map.addSource('stations', { type: 'geojson', data: stations })
     map.addSource('neighborhoods', { type: 'geojson', data: '/data/chicago_neighborhoods.geojson' })
 
-    map.addLayer({
-      "id": "neighborhoods-fill",
-      "type": "fill",
-      "source": "neighborhoods",
-      "layout": {},
-      "paint": {
-        "fill-color": "#b3d5ed",
-        "fill-opacity": 0.47
-      },
-      filter: ["!=", "PRI_NEIGH", ""]
-    }, 'stations')
+    //iterate through neighborhoods//
+    getNeighborhoods()
+      .then(response => {
+        response.features.forEach(neighborhood => {
+          var hood = neighborhood.properties.PRI_NEIGH || neighborhood.properties.SEC_NEIGH
+					hood = hood.toLowerCase().replace(/\s/g, '')
+          //debugger;
+          map.addSource(hood, { type: 'geojson', data: neighborhood })
+          //create new layer//
+          map.addLayer({
+            "id": hood + "-fill",
+            "type": "fill",
+            "source": hood,
+            "layout": {},
+            "paint": {
+              "fill-color": "#b3d5ed",
+              "fill-opacity": 0.47
+            },
+            filter: ["!=", "PRI_NEIGH", ""]
+          })
+
+          map.addLayer({
+            "id": hood + "-borders",
+            "type": "line",
+            "source": hood,
+            "layout": {},
+            "paint": {
+              "line-color": "#ad0403",
+              "line-width": 2
+            },
+            filter: ["!=", "PRI_NEIGH", ""]
+          })
+
+          //map.addLayer("{
+          //  id: "neighborhoods-hover",
+          //  type: "fill",
+          //  source: "neighborhoods",
+          //  layout: {},
+          //  paint: {
+          //    "fill-color": "#b3d5ed",
+          //    "fill-opacity": 0.6
+          //  },
+          //  filter: ["==", "PRI_NEIGH", ""]
+          //})
+        })
+      }, self)
 
     map.addLayer({
-      "id": "neighborhoods-borders",
-      "type": "line",
-      "source": "neighborhoods",
-      "layout": {},
-      "paint": {
-        "line-color": "#ad0403",
-        "line-width": 2
-      },
-      filter: ["!=", "PRI_NEIGH", ""]
-    })
-    map.addLayer({
-      id: "neighborhoods-hover",
-      type: "fill",
-      source: "neighborhoods",
-      layout: {},
-      paint: {
-        "fill-color": "#b3d5ed",
-        "fill-opacity": 0.6
-      },
-      filter: ["==", "PRI_NEIGH", ""]
-    })
-    map.addLayer({
-      id: "neighborhoods-selected",
+      id: "neighborhood-selected",
       type: "fill",
       source: "neighborhoods",
       layout: {},
@@ -135,28 +152,28 @@ getStations().then((stations) => {
     });
 
     //all neighborhoods related events//
-    map.on('click', 'neighborhoods-fill', (e) => {
-      var element = document.querySelector('.filter')
-      element.value = e.features[0].properties.PRI_NEIGH
-      var event = new Event('change');
-      element.dispatchEvent(event)
-    })
-    map.on('mousemove', 'neighborhoods-fill', (e) => {
-      map.getCanvas().style.cursor = 'pointer'
-      //if selected dont change color//
-      map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
-      //polylabel only works for single dimensional arrays i.e. not ohare and not streeterville//
-      var t = polylabel(e.features[0].geometry.coordinates, 1.0)
-      popup
-        .setLngLat(t)
-        .setHTML(e.features[0].properties.PRI_NEIGH)
-        .addTo(map)
-    })
-    map.on('mouseleave', 'neighborhoods-fill', (e) => {
-      map.getCanvas().style.cursor = ''
-      map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", ""]);
-      popup.remove()
-    })
+    //map.on('click', 'neighborhoods-fill', (e) => {
+    //  var element = document.querySelector('.filter')
+    //  element.value = e.features[0].properties.PRI_NEIGH
+    //  var event = new Event('change');
+    //  element.dispatchEvent(event)
+    //})
+    //map.on('mousemove', 'neighborhoods-fill', (e) => {
+    //  map.getCanvas().style.cursor = 'pointer'
+    //  //if selected dont change color//
+    //  map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
+    //  //polylabel only works for single dimensional arrays i.e. not ohare and not streeterville//
+    //  var t = polylabel(e.features[0].geometry.coordinates, 1.0)
+    //  popup
+    //    .setLngLat(t)
+    //    .setHTML(e.features[0].properties.PRI_NEIGH)
+    //    .addTo(map)
+    //})
+    //map.on('mouseleave', 'neighborhoods-fill', (e) => {
+    //  map.getCanvas().style.cursor = ''
+    //  map.setFilter("neighborhoods-hover", ["==", "PRI_NEIGH", ""]);
+    //  popup.remove()
+    //})
 
     //all station related events//
     map.on('mouseenter', 'stations', () => {
@@ -176,8 +193,8 @@ getStations().then((stations) => {
 
   filter.addEventListener('change', (e) => {
     console.log(e.target.value)
-    map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.value]);
-    //map.setLayoutProperty(e.target.value, 'visibility', 'visible');
+    var neighborhood = e.target.value.toLowerCase().replace(/\s/g, '')
+    map.setFilter("neighborhood-selected", ["==", "PRI_NEIGH", neighborhood]);
   })
 
 })
