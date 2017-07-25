@@ -79,6 +79,7 @@ getStations().then((stations) => {
               .setHTML(e.target.innerText)
               .addTo(map)
             map.panTo(t)
+            map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.innerText]);
           })
           filter.appendChild(elem)
         })
@@ -147,7 +148,7 @@ getStations().then((stations) => {
     //all neighborhoods related events//
     map.on('click', 'neighborhoods-fill', (e) => {
       map.panTo(e.lngLat);
-      map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.value]);
+      map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
     })
     map.on('mousemove', 'neighborhoods-fill', (e) => {
       map.getCanvas().style.cursor = 'pointer'
