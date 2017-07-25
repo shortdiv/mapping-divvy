@@ -1,6 +1,7 @@
 import mapboxgl from 'mapbox-gl';
 import { fetchCSV, fetchURL } from './readFile'
 import polylabel from 'polylabel';
+const turf = require('@turf/inside')
 const parse = require('csv-parse/lib/sync')
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2hvcnRkaXYiLCJhIjoiY2l3OGc5YmE5MDJzZjJ5bWhkdDZieGdzcSJ9.1z-swTWtcCHYI_RawDJCEw';
@@ -13,11 +14,10 @@ const map = new mapboxgl.Map({
 
 const mapEl = document.getElementById('map')
 const overlayEl = document.getElementById('map-filter-overlay')
-
-     var popup = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false
-    });
+var popup = new mapboxgl.Popup({
+  closeButton: false,
+  closeOnClick: false
+});
 
 function makeNeighborhood(name) {
   var parser = new DOMParser
@@ -27,8 +27,7 @@ function makeNeighborhood(name) {
 }
 
 function getStations() {
-  return new Promise((resolve, reject) => {
-    fetchCSV().then((response) => {
+  return fetchCSV().then((response) => {
       let object = parse(response, {columns: true})
       let geoStations = []
       object.forEach((station) => {
@@ -52,23 +51,37 @@ function getStations() {
           }
         )
       })
-      resolve({
+      return({
         type: "FeatureCollection",
         features: geoStations
       })
     })
-  })
 }
 
-getStations().then((stations) => {
+function getNeighborhoods() {
+  return fetchURL('/data/chicago_neighborhoods.geojson')
+    .then(response => {
+      return response
+    })
+}
+
+Promise.all([getStations(), getNeighborhoods()])
+  .then(values => {
+
   map.on('load', () => {
-    map.addSource('stations', { type: 'geojson', data: stations })
-    map.addSource('neighborhoods', { type: 'geojson', data: '/data/chicago_neighborhoods.geojson' })
-    fetchURL('/data/chicago_neighborhoods.geojson')
-      .then(response => {
+    map.addSource('stations', { type: 'geojson', data: values[0] })
+    map.addSource('neighborhoods', { type: 'geojson', data: values[1] })
         let filter = document.createElement('div')
         filter.className += 'neighborhood-list'
-        response.features.forEach(feature => {
+        values[1].features.forEach(feature => {
+          var stationsArray = []
+          values[0].features.forEach(station => {
+          //var isInside = turf(station.geometry.coordinates, feature.geometry.coordinates)
+          //var bike = turf.point(station.geometry.coordinates)
+          //var hood = turf.polygon(feature.geometry.coordinates)
+          //var isInside = turf.inside(bike, hood);
+          //isInside ? stationsArray.push(station) : ''
+          })
           let neighborhood = feature.properties.PRI_NEIGH;
           let elem = makeNeighborhood(neighborhood)
 
@@ -82,9 +95,8 @@ getStations().then((stations) => {
             map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.innerText]);
           })
           filter.appendChild(elem)
-        })
+          })
         overlayEl.appendChild(filter)
-      })
 
 
     map.addLayer({
@@ -183,6 +195,7 @@ getStations().then((stations) => {
     })
   })
 })
+
 
 
 

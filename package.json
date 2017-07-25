@@ -33,6 +33,7 @@
     "webpack": "^2.4.1"
   },
   "dependencies": {
+    "@turf/inside": "^4.5.2",
     "babel-polyfill": "^6.23.0",
     "csv-parse": "^1.2.0",
     "mapbox-gl": "^0.38.0",
