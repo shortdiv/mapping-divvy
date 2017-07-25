@@ -11,25 +11,20 @@ const map = new mapboxgl.Map({
   zoom: 12
 })
 
-const mapEl = document.querySelector('#map')
-let filter = document.createElement('select')
-filter.className += 'filter'
+const mapEl = document.getElementById('map')
+const overlayEl = document.getElementById('map-filter-overlay')
+
+     var popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+    });
 
 function makeNeighborhood(name) {
   var parser = new DOMParser
-  var content = '<option value ="' + name + '">' + name + '</option>'
+  var content = '<a href="#">' + name + '</a>'
   var snippet = parser.parseFromString(content, 'text/html').body.children[0]
   return snippet
 }
-
-    fetchURL('/data/chicago_neighborhoods.geojson')
-      .then(response => {
-        response.features.forEach(feature => {
-          let neighborhood = feature.properties.PRI_NEIGH;
-          filter.appendChild(makeNeighborhood(neighborhood))
-        })
-        mapEl.appendChild(filter)
-      })
 
 function getStations() {
   return new Promise((resolve, reject) => {
@@ -57,7 +52,6 @@ function getStations() {
           }
         )
       })
-      //mapEl.appendChild(filter)
       resolve({
         type: "FeatureCollection",
         features: geoStations
@@ -70,6 +64,27 @@ getStations().then((stations) => {
   map.on('load', () => {
     map.addSource('stations', { type: 'geojson', data: stations })
     map.addSource('neighborhoods', { type: 'geojson', data: '/data/chicago_neighborhoods.geojson' })
+    fetchURL('/data/chicago_neighborhoods.geojson')
+      .then(response => {
+        let filter = document.createElement('div')
+        filter.className += 'neighborhood-list'
+        response.features.forEach(feature => {
+          let neighborhood = feature.properties.PRI_NEIGH;
+          let elem = makeNeighborhood(neighborhood)
+
+          elem.addEventListener('click', (e) => {
+            var t = polylabel(feature.geometry.coordinates, 1.0)
+            popup
+              .setLngLat(t)
+              .setHTML(e.target.innerText)
+              .addTo(map)
+            map.panTo(t)
+          })
+          filter.appendChild(elem)
+        })
+        overlayEl.appendChild(filter)
+      })
+
 
     map.addLayer({
       "id": "neighborhoods-fill",
@@ -129,17 +144,10 @@ getStations().then((stations) => {
     }
     })
 
-     var popup = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false
-    });
-
     //all neighborhoods related events//
     map.on('click', 'neighborhoods-fill', (e) => {
-      var element = document.querySelector('.filter')
-      element.value = e.features[0].properties.PRI_NEIGH
-      var event = new Event('change');
-      element.dispatchEvent(event)
+      map.panTo(e.lngLat);
+      map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.value]);
     })
     map.on('mousemove', 'neighborhoods-fill', (e) => {
       map.getCanvas().style.cursor = 'pointer'
@@ -173,13 +181,6 @@ getStations().then((stations) => {
         .addTo(map);
     })
   })
-
-  filter.addEventListener('change', (e) => {
-    console.log(e.target.value)
-    map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.value]);
-    //map.setLayoutProperty(e.target.value, 'visibility', 'visible');
-  })
-
 })
 
 
