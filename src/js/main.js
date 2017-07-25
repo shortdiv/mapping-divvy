@@ -76,7 +76,11 @@ Promise.all([getStations(), getNeighborhoods()])
         values[1].features.forEach(feature => {
           var stationsArray = []
           values[0].features.forEach(station => {
-          //var isInside = turf(station.geometry.coordinates, feature.geometry.coordinates)
+          if(station.properties.stationName === 'Broadway & Cornelia Ave' && (feature.properties.PRI_NEIGH === 'Lake View' || feature.properties.PRI_NEIGH === 'Boystown')) {
+            console.log('yes')
+            var isInside = turf(station.geometry.coordinates, feature.geometry.coordinates)
+debugger;
+          }
           //var bike = turf.point(station.geometry.coordinates)
           //var hood = turf.polygon(feature.geometry.coordinates)
           //var isInside = turf.inside(bike, hood);
