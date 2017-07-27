@@ -19,11 +19,23 @@ var popup = new mapboxgl.Popup({
   closeOnClick: false
 });
 
+var stationPopup = new mapboxgl.Popup({
+  closeButton: true,
+  closeOnClick: false
+});
+
 function makeNeighborhood(name) {
   var parser = new DOMParser
   var content = '<a href="#">' + name + '</a>'
   var snippet = parser.parseFromString(content, 'text/html').body.children[0]
   return snippet
+}
+
+function makeStation(station) {
+  var parser = new DOMParser
+  var content = '<li><a href="#">' + station.properties.stationName + '</a></li>'
+  var snippet = parser.parseFromString(content, 'text/html').body.children[0]
+  return snippet;
 }
 
 function getStations() {
@@ -79,19 +91,37 @@ Promise.all([getStations(), getNeighborhoods()])
     map.on('load', () => {
       map.addSource('stations', { type: 'geojson', data: stations })
       map.addSource('neighborhoods', { type: 'geojson', data: neighborhoods })
-      let filter = document.createElement('div')
+      let filter = document.createElement('ul')
       filter.className += 'neighborhood-list'
       neighborhoods.features.forEach(neighborhood => {
-        var stationsArray = []
+        var stationsInNeighborhood = []
+        var frag = document.createElement('ul')
+        frag.className += 'station-list'
+        var neighborhoodElem = document.createElement('li')
         stations.features.forEach(station => {
-			    var inside = turf(station, neighborhood)
-					inside ? stationsArray.push(station) : ''
+          var inside = turf(station, neighborhood)
+          var stationElem = inside ? makeStation(station) : null
+          if(stationElem != null) {
+            stationElem.childNodes[0].addEventListener('click', (e) => {
+              popup.remove()
+              map.panTo(station.geometry.coordinates);
+              var content = "<h1>"+ station.properties.stationName + "</h1>" + "<p>Total Docks: " + station.properties.docks + "</p>"
+              stationPopup.remove()
+              stationPopup
+                .setLngLat(station.geometry.coordinates)
+                .setHTML(content)
+                .addTo(map);
+            })
+            frag.appendChild(stationElem)
+          }
         })
-        let neighborhoodName = neighborhood.properties.PRI_NEIGH;
-        let elem = makeNeighborhood(neighborhoodName, stationsArray)
+        let elem = makeNeighborhood(neighborhood.properties.PRI_NEIGH)
+        neighborhoodElem.appendChild(elem)
+        neighborhoodElem.appendChild(frag)
 
         elem.addEventListener('click', (e) => {
           var t = polylabel(neighborhood.geometry.coordinates, 1.0)
+          stationPopup.remove()
           popup
             .setLngLat(t)
             .setHTML(e.target.innerText)
@@ -99,7 +129,7 @@ Promise.all([getStations(), getNeighborhoods()])
           map.panTo(t)
           map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.target.innerText]);
         })
-        filter.appendChild(elem)
+        filter.appendChild(neighborhoodElem)
       })
       overlayEl.appendChild(filter)
 
@@ -173,6 +203,13 @@ Promise.all([getStations(), getNeighborhoods()])
       //all neighborhoods related events//
       map.on('click', 'neighborhoods-fill', (e) => {
         map.panTo(e.lngLat);
+        stationPopup.remove()
+        popup.remove()
+        var t = polylabel(e.features[0].geometry.coordinates, 1.0)
+        popup
+          .setLngLat(t)
+          .setHTML(e.features[0].properties.PRI_NEIGH)
+          .addTo(map)
         map.setFilter("neighborhoods-selected", ["==", "PRI_NEIGH", e.features[0].properties.PRI_NEIGH]);
       })
       map.on('mousemove', 'neighborhoods-fill', (e) => {
@@ -201,7 +238,8 @@ Promise.all([getStations(), getNeighborhoods()])
       })
       map.on('click', 'stations', (e) => {
         var content = "<h1>"+e.features[0].properties.stationName + "</h1>" + "<p>Total Docks: " + e.features[0].properties.docks + "</p>"
-        new mapboxgl.Popup()
+        stationPopup.remove()
+        stationPopup
           .setLngLat(e.features[0].geometry.coordinates)
           .setHTML(content)
           .addTo(map);
